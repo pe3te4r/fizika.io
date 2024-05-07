@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Динамические задачи по физике</title>
+</head>
+<body>
+<h1>Задача для решения:</h1>
+<div id="taskContainer"></div>
+<input type="text" id="userAnswer" placeholder="Введите ваш ответ">
+<button id="submitAnswer" onclick="checkAnswer()">Проверить ответ</button>
+<p id="result"></p>
+<button id="nextTask" onclick="loadNextTask()" style="display:none;">Следующая задача</button>
+<p id="finalScore" style="display:none;"></p>
+
+<script>
+    const tasks = [
+        {
+            description: "Autobus sa pohybuje tak , že jeho prejdena draha (v metroch) zavisi na čase podla vztahu s(t)=a-bt-ct^2+dt^3 .Vypočitajte v akom časovom okamihu od začiatku pohzbu bude mat autobus zrzchlenie a=e km.h^(-2)",
+            template: "s(t)={a}-{b}t-{c}t^2+{d}t^3",
+            coefficients: ['a', 'b', 'c', 'd'],
+            type: "math",
+            correctAnswer: "42" // Замените на динамический расчет или формулу при необходимости
+        },
+        {
+            description: "Bod sa pohybuje priamo£iaro tak, že jeho dráha (v metroch) závisi od času s(t) = {e}t + {f}t^2. Aká je priemerná rýchlost´ Up v časovom intervale medzi deviatou a dvanástou sekundou a aké sú okamžité rýchlosti a zrýchlenia v týchto dvoch okamihoch?",
+            template: "s(t) = {e}t + {f}t^2",
+            coefficients: ['e', 'f'],
+            type: "physics",
+            calculate: function (coefficients) {
+                let [e, f] = coefficients.map(Number);
+                let average = this.calculateAverageSpeed(9, 12, e, f).toFixed(2);
+                let speedAt9 = this.calculateInstantSpeed(9, e, f).toFixed(2);
+                let speedAt12 = this.calculateInstantSpeed(12, e, f).toFixed(2);
+                return `${average}, ${speedAt9}, ${speedAt12}`;
+            },
+            calculateAverageSpeed: function (t1, t2, e, f) {
+                const s1 = e * t1 + f * t1 * t1;
+                const s2 = e * t2 + f * t2 * t2;
+                return ((s2 - s1) / (t2 - t1));
+            },
+            calculateInstantSpeed: function (t, e, f) {
+                return e + 2 * f * t;
+            }
+        }
+    ];
+
+    let currentTaskIndex = 0;
+    let correctAnswersCount = 0;
+
+    function loadTask() {
+        if (currentTaskIndex >= tasks.length) {
+            document.getElementById('finalScore').textContent = `Ваша оценка: ${correctAnswersCount} из ${tasks.length}`;
+            document.getElementById('finalScore').style.display = 'block';
+            return;
+        }
+
+        const task = tasks[currentTaskIndex];
+        document.getElementById('taskContainer').innerHTML = `<p>${task.description}</p>`;
+        if (task.type === "math" || task.type === "physics") {
+            const coefficients = generateRandomCoefficients(task.coefficients);
+            const equation = generateEquation(task.template, coefficients);
+            document.getElementById('taskContainer').innerHTML += `<p>${equation}</p>`;
+            if (task.type === "physics") {
+                task.correctAnswer = task.calculate(coefficients); // Calculate correct answer dynamically
+            }
+        }
+
+        document.getElementById('submitAnswer').disabled = false;
+        document.getElementById('userAnswer').value = '';
+        document.getElementById('result').textContent = '';
+        document.getElementById('nextTask').style.display = 'none';
+    }
+
+    function generateRandomCoefficients(coefficients) {
+        return coefficients.map(() => Math.floor(Math.random() * 10 + 1));
+    }
+
+    function generateEquation(template, coefficients) {
+        coefficients.forEach((value, index) => {
+            template = template.replace(`{${tasks[currentTaskIndex].coefficients[index]}}`, value);
+        });
+        return template;
+    }
+
+    function checkAnswer() {
+        const userAnswer = document.getElementById('userAnswer').value.trim();
+        const correctAnswer = tasks[currentTaskIndex].correctAnswer;
+        const resultText = userAnswer === correctAnswer ? "Правильно!" : "Неправильно.";
+        document.getElementById('result').textContent = resultText;
+
+        if (userAnswer === correctAnswer) {
+            correctAnswersCount++;
+        }
+
+        document.getElementById('submitAnswer').disabled = true;
+        document.getElementById('nextTask').style.display = 'block';
+    }
+
+    function loadNextTask() {
+        currentTaskIndex++;
+        loadTask();
+    }
+
+    window.onload = loadTask;
+</script>
+</body>
+</html>
